@@ -43,7 +43,7 @@ food, transport, rent, salary, etc
 
 ### 거래 추가
 
-`add`는 대화형 입력으로 동작합니다.
+`add`는 대화형 입력으로 동작합니다. 날짜, 타입, 카테고리, 금액을 잘못 입력하면 오류와 힌트를 출력하고 같은 항목을 다시 입력받습니다.
 
 ```bash
 python -m budget_app add
