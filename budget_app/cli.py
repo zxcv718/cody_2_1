@@ -4,11 +4,11 @@ import argparse
 from collections.abc import Callable, Sequence
 from typing import TypeVar
 
+from .command_validation import CommandValidator
 from .decorators import cli_error_boundary
 from .errors import BudgetAppError
 from .formatters import format_budget, format_summary, format_transaction
 from .services import BudgetAppService
-from .validators import validate_amount, validate_category_name, validate_date, validate_transaction_type
 
 T = TypeVar("T")
 
@@ -106,13 +106,22 @@ def service_from_args(args: argparse.Namespace) -> BudgetAppService:
 
 def handle_add(args: argparse.Namespace) -> int:
     service = service_from_args(args)
-    date = _prompt_until_valid("날짜(YYYY-MM-DD): ", validate_date)
-    transaction_type = _prompt_until_valid("타입(income/expense): ", validate_transaction_type)
-    category = _prompt_until_valid("카테고리: ", lambda value: _validate_existing_category(service, value))
-    amount = _prompt_until_valid("금액(양수): ", validate_amount)
+    validator = CommandValidator(service)
+    date = _prompt_validated("날짜(YYYY-MM-DD): ", validator.date)
+    transaction_type = _prompt_validated("타입(income/expense): ", validator.transaction_type)
+    category = _prompt_validated("카테고리: ", validator.category)
+    amount = _prompt_validated("금액(양수): ", validator.amount)
     memo = _prompt("메모(선택): ", required=False)
     tags = _prompt("태그(쉼표로 구분, 없으면 엔터): ", required=False)
-    transaction = service.add_transaction(date, transaction_type, category, amount, memo, tags)
+    add_input = validator.validate_add_transaction(date, transaction_type, category, amount, memo, tags)
+    transaction = service.add_transaction(
+        add_input.date,
+        add_input.transaction_type,
+        add_input.category,
+        add_input.amount,
+        add_input.memo,
+        add_input.tags,
+    )
     print(f"[저장 완료] id={transaction.id}")
     return 0
 
@@ -260,7 +269,7 @@ def _prompt(label: str, required: bool = True) -> str:
         print("[오류] 필수 입력값입니다.")
 
 
-def _prompt_until_valid(label: str, validator: Callable[[str], T]) -> T:
+def _prompt_validated(label: str, validator: Callable[[str], T]) -> T:
     while True:
         value = _prompt(label)
         try:
@@ -269,13 +278,3 @@ def _prompt_until_valid(label: str, validator: Callable[[str], T]) -> T:
             print(f"[오류] {exc.message}")
             if exc.hint:
                 print(f"[힌트] {exc.hint}")
-
-
-def _validate_existing_category(service: BudgetAppService, value: str) -> str:
-    category = validate_category_name(value)
-    if not service.categories.exists(category):
-        raise BudgetAppError(
-            f"등록되지 않은 카테고리입니다: {category}",
-            "`category list`로 확인하거나 `category add`로 먼저 등록하세요.",
-        )
-    return category
