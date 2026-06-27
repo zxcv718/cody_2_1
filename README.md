@@ -164,6 +164,7 @@ date,type,category,amount,memo,tags
 | `budget_app.models` | `dataclass` 기반 데이터 구조 |
 | `budget_app.storage` | JSONL 파일 I/O, 제너레이터 스트리밍, 원자적 재작성 |
 | `budget_app.services` | 거래/예산/카테고리 비즈니스 로직 |
+| `budget_app.command_validation` | 명령 입력값 검증과 대화형 재입력 기준 |
 | `budget_app.cli` | `argparse` 기반 CLI |
 | `budget_app.decorators` | 공통 예외 처리 데코레이터 |
 | `budget_app.validators` | 날짜, 월, 금액, 타입, 태그 검증 |
